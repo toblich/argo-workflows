@@ -1,4 +1,4 @@
-## Argo Workflows User Community Surveys & Feedback
+# Argo Workflows User Community Surveys & Feedback
 
 Please find [here](https://github.com/argoproj/argoproj/blob/master/community/user_surveys/ArgoWorkflows2020SurveySummary.pdf) Argo Workflows user community 2020 survey results and the 2021 results [here](https://blog.argoproj.io/argo-workflows-2021-survey-results-d6fa890030ee?gi=857daaa1faa9).
 
@@ -27,7 +27,7 @@ Currently, the following organizations are **officially** using Argo Workflows:
 1. [AppDirect](https://www.appdirect.com/)
 1. [Arabesque](https://www.arabesque.com/)
 1. [Argonaut](https://www.argonaut.dev/)
-1. [ArthurAI](https://arthur.ai/) 
+1. [ArthurAI](https://arthur.ai/)
 1. [Astraea](https://astraea.earth/)
 1. [Atlan](https://atlan.com/)
 1. [BasisAI](https://basis-ai.com/)
@@ -78,11 +78,12 @@ Currently, the following organizations are **officially** using Argo Workflows:
 1. [Elastic](https://www.elastic.co/)
 1. [Fairwinds](https://fairwinds.com/)
 1. [FOLIO](http://corp.folio-sec.com/)
+1. [freee](https://corp.freee.co.jp/en/company/)
 1. [FreeWheel](https://freewheel.com/)
 1. [Fynd Trak](https://trak.fynd.com/)
 1. [Galixir](https://www.galixir.com/)
 1. [Gardener](https://gardener.cloud/)
-2. [Gepardec](https://gepardec.com/)
+1. [Gepardec](https://gepardec.com/)
 1. [GitHub](https://github.com/)
 1. [Gitpod](https://www.gitpod.io/)
 1. [Gladly](https://gladly.com/)
@@ -114,6 +115,7 @@ Currently, the following organizations are **officially** using Argo Workflows:
 1. [KarrotPay](https://www.daangnpay.com/)
 1. [Kasa](https://www.kasa.co.kr/)
 1. [KintoHub](https://www.kintohub.com/)
+1. [KPMG](https://kpmg.com/uk)
 1. [Localytics](https://www.localytics.com/)
 1. [Lumin Digital](https://lumindigital.com/)
 1. [Maersk](https://www.maersk.com/solutions/digital-solutions)

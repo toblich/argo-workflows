@@ -31,7 +31,7 @@ func (s *SignalsSuite) TestStopBehavior() {
 		SubmitWorkflow().
 		WaitForWorkflow(fixtures.ToHaveRunningPod, killDuration).
 		ShutdownWorkflow(wfv1.ShutdownStrategyStop).
-		WaitForWorkflow(killDuration).
+		WaitForWorkflow(killDuration + 10*time.Second). // this one takes especially long in CI
 		Then().
 		ExpectWorkflow(func(t *testing.T, m *metav1.ObjectMeta, status *wfv1.WorkflowStatus) {
 			assert.Contains(t, []wfv1.WorkflowPhase{wfv1.WorkflowFailed, wfv1.WorkflowError}, status.Phase)
@@ -146,6 +146,29 @@ func (s *SignalsSuite) TestSignaled() {
 		ExpectWorkflow(func(t *testing.T, metadata *metav1.ObjectMeta, status *wfv1.WorkflowStatus) {
 			assert.Equal(t, wfv1.WorkflowFailed, status.Phase)
 			assert.Equal(t, "Error (exit code 143)", status.Message)
+		})
+}
+
+func (s *SignalsSuite) TestSignaledContainerSet() {
+	s.Given().
+		Workflow("@testdata/signaled-container-set-workflow.yaml").
+		When().
+		SubmitWorkflow().
+		WaitForWorkflow().
+		Then().
+		ExpectWorkflow(func(t *testing.T, metadata *metav1.ObjectMeta, status *wfv1.WorkflowStatus) {
+			assert.Equal(t, wfv1.WorkflowFailed, status.Phase)
+			assert.Equal(t, "OOMKilled (exit code 137)", status.Message)
+			one := status.Nodes.FindByDisplayName("one")
+			if assert.NotNil(t, one) {
+				assert.Equal(t, wfv1.NodeFailed, one.Phase)
+				assert.Equal(t, "OOMKilled (exit code 137): ", one.Message)
+			}
+			two := status.Nodes.FindByDisplayName("two")
+			if assert.NotNil(t, two) {
+				assert.Equal(t, wfv1.NodeFailed, two.Phase)
+				assert.Equal(t, "Error (exit code 143): ", two.Message)
+			}
 		})
 }
 

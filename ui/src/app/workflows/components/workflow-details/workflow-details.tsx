@@ -1,5 +1,5 @@
 import {Page, SlidingPanel} from 'argo-ui';
-import * as classNames from 'classnames';
+import classNames from 'classnames';
 import * as React from 'react';
 import {useContext, useEffect, useRef, useState} from 'react';
 import {RouteComponentProps} from 'react-router';
@@ -27,6 +27,7 @@ import {WorkflowOperations} from '../../../shared/workflow-operations-map';
 import {WidgetGallery} from '../../../widgets/widget-gallery';
 import {EventsPanel} from '../events-panel';
 import {ResubmitWorkflowPanel} from '../resubmit-workflow-panel';
+import {RetryWorkflowPanel} from '../retry-workflow-panel';
 import {WorkflowArtifacts} from '../workflow-artifacts';
 import {WorkflowLogsViewer} from '../workflow-logs-viewer/workflow-logs-viewer';
 import {WorkflowNodeInfo} from '../workflow-node-info/workflow-node-info';
@@ -188,32 +189,44 @@ export const WorkflowDetails = ({history, location, match}: RouteComponentProps<
                         if (workflowOperation.title === 'DELETE') {
                             popup
                                 .confirm('Confirm', () => <DeleteCheck isWfInDB={isArchivedWorkflow(workflow)} isWfInCluster={isWorkflowInCluster(workflow)} />)
-                                .then(yes => {
-                                    if (yes) {
-                                        if (isWorkflowInCluster(workflow)) {
-                                            services.workflows.delete(workflow.metadata.name, workflow.metadata.namespace).catch(setError);
-                                        }
-                                        if (isArchivedWorkflow(workflow) && (globalDeleteArchived || !isWorkflowInCluster(workflow))) {
-                                            services.workflows.deleteArchived(workflow.metadata.uid, workflow.metadata.namespace).catch(setError);
-                                        }
-                                        navigation.goto(uiUrl(`workflows/${workflow.metadata.namespace}`));
-                                        // TODO: This is a temporary workaround so that the list of workflows
-                                        //  is correctly displayed. Workflow list page needs to be more responsive.
-                                        window.location.reload();
+                                .then(async yes => {
+                                    if (!yes) {
+                                        return;
                                     }
+
+                                    const allPromises = [];
+                                    if (isWorkflowInCluster(workflow)) {
+                                        allPromises.push(services.workflows.delete(workflow.metadata.name, workflow.metadata.namespace).catch(setError));
+                                    }
+                                    if (isArchivedWorkflow(workflow) && (globalDeleteArchived || !isWorkflowInCluster(workflow))) {
+                                        allPromises.push(services.workflows.deleteArchived(workflow.metadata.uid, workflow.metadata.namespace).catch(setError));
+                                    }
+                                    await Promise.all(allPromises);
+                                    if (error !== null) {
+                                        return;
+                                    }
+
+                                    navigation.goto(uiUrl(`workflows/${workflow.metadata.namespace}`));
+                                    // TODO: This is a temporary workaround so that the list of workflows
+                                    //  is correctly displayed. Workflow list page needs to be more responsive.
+                                    window.location.reload();
                                 });
                         } else if (workflowOperation.title === 'RESUBMIT') {
                             setSidePanel('resubmit');
+                        } else if (workflowOperation.title === 'RETRY') {
+                            setSidePanel('retry');
                         } else {
                             popup.confirm('Confirm', `Are you sure you want to ${workflowOperation.title.toLowerCase()} this workflow?`).then(yes => {
-                                if (yes) {
-                                    workflowOperation
-                                        .action(workflow)
-                                        .then((wf: Workflow) => {
-                                            setName(wf.metadata.name);
-                                        })
-                                        .catch(setError);
+                                if (!yes) {
+                                    return;
                                 }
+
+                                workflowOperation
+                                    .action(workflow)
+                                    .then((wf: Workflow) => {
+                                        setName(wf.metadata.name);
+                                    })
+                                    .catch(setError);
                             });
                         }
                     }
@@ -471,11 +484,13 @@ export const WorkflowDetails = ({history, location, match}: RouteComponentProps<
 
     const renderResumePopup = () => {
         return popup.confirm('Confirm', renderSuspendNodeOptions).then(yes => {
-            if (yes) {
-                updateOutputParametersForNodeIfRequired()
-                    .then(resumeNode)
-                    .catch(setError);
+            if (!yes) {
+                return;
             }
+
+            updateOutputParametersForNodeIfRequired()
+                .then(resumeNode)
+                .catch(setError);
         });
     };
 
@@ -567,7 +582,7 @@ export const WorkflowDetails = ({history, location, match}: RouteComponentProps<
                     ))}
             </div>
             {workflow && (
-                <SlidingPanel isShown={!!sidePanel} onClose={() => setSidePanel(null)} isMiddle={parsedSidePanel.type === 'resubmit'}>
+                <SlidingPanel isShown={!!sidePanel} onClose={() => setSidePanel(null)} isMiddle={['resubmit', 'retry'].includes(parsedSidePanel.type)}>
                     {parsedSidePanel.type === 'logs' && (
                         <WorkflowLogsViewer
                             workflow={workflow}
@@ -581,6 +596,7 @@ export const WorkflowDetails = ({history, location, match}: RouteComponentProps<
                     {parsedSidePanel.type === 'share' && <WidgetGallery namespace={namespace} name={name} />}
                     {parsedSidePanel.type === 'yaml' && <WorkflowYamlViewer workflow={workflow} selectedNode={selectedNode} />}
                     {parsedSidePanel.type === 'resubmit' && <ResubmitWorkflowPanel workflow={workflow} isArchived={isArchivedWorkflow(workflow)} />}
+                    {parsedSidePanel.type === 'retry' && <RetryWorkflowPanel workflow={workflow} isArchived={isArchivedWorkflow(workflow)} />}
                     {!parsedSidePanel}
                 </SlidingPanel>
             )}
